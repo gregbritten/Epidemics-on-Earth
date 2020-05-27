@@ -1,1 +1,1 @@
-# COVID-19-UROP
+# COVID-19 Modelling project
