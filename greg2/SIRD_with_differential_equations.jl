@@ -22,14 +22,14 @@ end
 
 # Set a problem with seasonally-varying transmission rate
 year = 365.0
-β(t) = 0.3 * (1 + cos(2π * t / year))
+β(t) = 0.15 * (1 + cos(2π * t / year))
 
-parameters = (μ = 0.01,
+parameters = (μ = 0.002,
               β = β,
               λ = 0.05,
               α = 0.01)
 
-timespan = (0, 2year)
+timespan = (0, 4year)
 initial_SIRD = [0.99, 0.01, 0.0, 0.0]
 
 problem = ODEProblem(compute_dSIRD_dt!, initial_SIRD, timespan, parameters)
@@ -42,6 +42,6 @@ S, I, R, D = [map(u -> u[i], solution.u) for i = 1:4]
 states = plot(t, [S, I, R, D], label=["S" "I" "R" "D"],
               ylabel="Fraction of population")
 
-transmission = plot(t, β.(t), label="β", xlabel="Days", ylabel="Fraction of population")
+transmission = plot(t, β.(t), label="β", xlabel="Days", ylabel="β")
 
 plot(states, transmission, layout=(2, 1), size=(1000, 400))
