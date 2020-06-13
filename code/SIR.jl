@@ -1,3 +1,6 @@
+using Pkg
+Pkg.add("DifferentialEquations")
+
 using DifferentialEquations
 using Plots
 
