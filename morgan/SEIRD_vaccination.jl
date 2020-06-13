@@ -56,6 +56,6 @@ for t in n_1iter:niter
         continue
     end
 end
-end
-println("")
+
+println("Runs properly...")
 #plot([S E I R D], label=['S' 'E' 'I' 'R' 'D'])
