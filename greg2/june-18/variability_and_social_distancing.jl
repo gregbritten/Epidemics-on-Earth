@@ -1,11 +1,11 @@
 include("stochastic_tools.jl")
 
 n_people = 1000
-social_distancing_time = 10
+social_distancing_time = 5
 β₀ = 0.5
 step_β(time) = time < social_distancing_time ? β₀ / n_people : β₀ / 10 / n_people
 
-problem = stochastic_SIR_problem(n_people; β = step_β, γ = γ₀ / n_people)
+problem = stochastic_SIR_problem(n_people; β = step_β, γ = 0.1)
 
 ensemble = solve_ensemble(problem, 100)
 

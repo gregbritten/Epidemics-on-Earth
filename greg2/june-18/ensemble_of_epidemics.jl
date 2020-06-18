@@ -2,9 +2,8 @@ include("stochastic_tools.jl")
 
 n_people = 1000
 β₀ = 0.5
-γ₀ = 100
 
-problem = stochastic_SIR_problem(n_people; β = β₀ / n_people, γ = γ₀ / n_people)
+problem = stochastic_SIR_problem(n_people; β = β₀ / n_people, γ = 0.1)
 
 ensemble = solve_ensemble(problem, 100)
 

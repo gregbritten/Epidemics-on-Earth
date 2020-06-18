@@ -14,12 +14,18 @@ function infectious_to_resistant!(integrator)
 end
 
 # Define rates for jump problem
-transmission_rate(β::Number, time) = β
+#
+# Below, we use multiple dispatch to obtain the transmission rate
+# at the current time given the parameter "β".
+# If `β` is a function, it is called with signature `β(time)`
+# If β is anything else, it is simply returned.
+transmission_rate(β, time) = β
 transmission_rate(β::Function, time) = β(time)
 
 infection_rate(state, parameters, time) = transmission_rate(parameters.β, time) * state[1] * state[2]
 recovery_rate(state, parameters, time) = parameters.γ * state[2]
 
+# To be strictly correct we need to use VariableRateJump here.
 infection = ConstantRateJump(infection_rate, susceptible_to_infectious!)
 recovery = ConstantRateJump(recovery_rate, infectious_to_resistant!)
 
@@ -51,6 +57,11 @@ function stochastic_SIR_problem(n_people;
     return discrete_problem
 end
 
+"""
+    solve_single(discrete_problem)
+
+Wrap `discrete_problem` in a `JumpProblem` and solve it.
+"""
 function solve_single(discrete_problem)
     jump_problem = JumpProblem(discrete_problem, Direct(), infection, recovery)
     solution = solve(jump_problem, FunctionMap())
@@ -74,6 +85,11 @@ function solve_ensemble(discrete_problem, n_ensemble=10)
     return ensemble
 end
 
+"""
+    unpack(solution)
+
+Returns t, S, I, R.
+"""
 function unpack(solution)
     S = map(u -> u[1], solution.u)
     I = map(u -> u[2], solution.u)

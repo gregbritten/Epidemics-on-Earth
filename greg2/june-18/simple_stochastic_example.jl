@@ -1,5 +1,11 @@
 using DifferentialEquations, Plots
 
+# This script sets up a stochastic SIR model.
+#
+# See https://docs.sciml.ai/stable/tutorials/discrete_stochastic_example/
+#
+# for inspiration.
+
 # Define transitions for jump problem
 function susceptible_to_infectious!(integrator)
     integrator.u[1] -= 1
@@ -32,9 +38,9 @@ recovery = ConstantRateJump(recovery_rate, infectious_to_resistant!)
 n_people = 100
 
 parameters = (
-              β = 0.5 / n_people,
-              γ = 10 / n_people
-              )
+    β = 0.5 / n_people,
+    γ = 0.1,
+)
 
 time_span = (0, 100.0)
 
