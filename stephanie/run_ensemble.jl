@@ -7,7 +7,7 @@ step_β(time) = time < social_distancing_time ? β₀ / n_people : β₀ / 10 / 
 
 problem = stochastic_SIR_problem(n_people; β = step_β, γ = 0.1, σ = 0.25)
 
-ensemble = solve_ensemble(problem, 100)
+ensemble = solve_ensemble(problem, 10)
 
 # Plot results
 alpha = 0.2
