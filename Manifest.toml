@@ -63,6 +63,20 @@ version = "0.15.15"
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
+[[BenchmarkTools]]
+deps = ["JSON", "Logging", "Printf", "Statistics", "UUIDs"]
+git-tree-sha1 = "9e62e66db34540a0c919d72172cc2f642ac71260"
+uuid = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+version = "0.5.0"
+
+[[BioSimulator]]
+deps = ["BenchmarkTools", "Combinatorics", "DataStructures", "IteratorInterfaceExtensions", "LinearAlgebra", "MacroTools", "PoissonRandom", "Random", "RecipesBase", "RecursiveArrayTools", "SparseArrays", "StaticArrays", "Statistics", "StatsBase", "TableTraits"]
+git-tree-sha1 = "83402f45414a08e27c261042f61fac4fe5680c1d"
+repo-rev = "master"
+repo-url = "https://github.com/alanderos91/BioSimulator.jl.git"
+uuid = "6aabf0a6-ec0e-58c4-b8bf-f645d5ac4ee8"
+version = "0.9.3"
+
 [[BoundaryValueDiffEq]]
 deps = ["BandedMatrices", "DiffEqBase", "FiniteDiff", "ForwardDiff", "LinearAlgebra", "NLsolve", "Reexport", "SparseArrays"]
 git-tree-sha1 = "3f2969de608af70db755cee9d4490a7294a6afc3"

@@ -1,4 +1,5 @@
 [deps]
+BioSimulator = "6aabf0a6-ec0e-58c4-b8bf-f645d5ac4ee8"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DiffEqBiological = "eb300fae-53e8-50a0-950c-e21f52c2b7e0"
