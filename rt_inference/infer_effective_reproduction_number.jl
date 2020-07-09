@@ -1,7 +1,5 @@
-using Pkg
 using Plots
 using CSV
-Pkg.activate("./Downloads/Distributions.jl/")
 using Distributions
 
 ###################PART ONE#####################
@@ -37,13 +35,29 @@ x = readline()
 
 country_name = "$x"
 
-m = CSV.read("./Downloads/COVID Data/$(country_dict[country_name]).csv")
+country_data_name = country_dict[country_name]
+data_dir = joinpath("..", "data", "nytimes_data", country_data_name * ".csv")
+
+m = CSV.read(data_dir)
+
+#m = CSV.read("./Downloads/COVID Data/$(country_dict[country_name]).csv")
 #m = CSV.read("./Downloads/[file_name].csv")
 
-new_cases = Int64.(zeros(2, length(m[:, 1])))
-for i in 1:2
-    global new_cases[i, :] = m[:, i]
+function transpose_data(data)
+    days = length(m[:, 1])
+    transposed = zeros(Int64, 2, days)
+    for row = 1:2
+        transposed[row, :] = data[:, row]
+    end
+    return transposed
 end
+
+new_cases = transpose_data(m)
+
+#new_cases = Int64.(zeros(2, length(m[:, 1])))
+#for i in 1:2
+#    global new_cases[i, :] = m[:, i]
+#end
 
 function roll_mean(data::Array, win_size = 7)
     rolling = zeros(length(data), 1)
