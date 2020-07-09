@@ -25,7 +25,8 @@ plot!(p1, [1, 1] .* social_distancing_time, [0, n_people],
 
 display(p1)
 
-function new_infections(solution, day)
+# But we really want the number of new infections...
+function change_in_infected(solution, day)
     i_previous_day = searchsortedfirst(solution.t, day-1)
     previous_infections = solution.u[i_previous_day][3]
 
