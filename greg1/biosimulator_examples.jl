@@ -74,7 +74,7 @@ SIRD <= Species("D",0)
 
 SIRD <= Reaction("infection",β, "S + I --> I + I")
 SIRD <= Reaction("recovery", γ, "I     --> R")
-SIRD <= Reaction("death",α,     "I     --> D")
+SIRD <= Reaction("death",    α, "I     --> D")
 
 SIRDsim = simulate(SIRD, Direct(), tfinal=days, rates_cache=HasRates, ntrials=50)
 #SIRsim = simulate(SIR, Direct(), tfinal=days, rates_cache=HasRates, save_points=0:1:365, ntrials=50)
