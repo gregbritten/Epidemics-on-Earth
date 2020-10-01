@@ -1,5 +1,12 @@
 using DifferentialEquations, Plots
-
+using Pkg
+Pkg.add("DataFrames")
+Pkg.add("CSV")
+Pkg.add("OnlineStats")
+Pkg.add("StatsPlots")
+using StatsPlots
+using DataFrames, CSV
+using Statistics, OnlineStats
 # SEIR problem...
 #
 # integrator.u[1] : "S"
@@ -83,6 +90,7 @@ Wrap `discrete_problem` in a `JumpProblem` and solve it.
 function solve_single(discrete_problem)
     jump_problem = JumpProblem(discrete_problem, Direct(), exposure, infection, recovery)
     solution = solve(jump_problem, FunctionMap())
+    print(solution)
     return solution
 end
 
@@ -137,20 +145,24 @@ function plot_solution(solution; kwargs...)
           label = "I",
           color = :black,
           kwargs...)
-
+    # plot!(sei_plot, t, R;
+    #     label = "R",
+    #     color = :green,
+    #     kwargs...)
+    #
     r_plot = plot(t, R;
                   label = "R",
                   color = :black,
                   kwargs...)
 
     two_pane = plot(sei_plot, r_plot, layout=(2, 1))
+    # two_pane = plot(sei_plot)
 
     return two_pane
 end
 
 function plot_solution!(two_pane, solution; kwargs...)
     t, S, E, I, R = unpack(solution)
-
     sei_plot = two_pane[1]
     r_plot = two_pane[2]
 
@@ -169,6 +181,11 @@ function plot_solution!(two_pane, solution; kwargs...)
           color = :black,
           kwargs...)
 
+    # plot!(sei_plot, t, R;
+    #     label = false,
+    #     color = :green,
+    #     kwargs...)
+
     plot!(r_plot, t, R;
           label = false,
           color = :black,
@@ -176,3 +193,184 @@ function plot_solution!(two_pane, solution; kwargs...)
 
     return nothing
 end
+
+## Different Betas
+
+#
+# β(t) = 0.15 * (1 + cos(2π * t / 365)) #seasonal
+# β(t) = .042*(3+cos(0.1π*t))
+# plot(β)
+#
+# A(t) = (.75/sqrt(t))
+# β(t) = A.(t)*(1+cos(0.2π*t))
+
+## Running stochastic results and plotting
+
+# sizes = [100,1000, 10000, 100000] #sizes for CSV files to test Systrom
+# times = [2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50]
+# social_distancing_time = 15
+# reopening_times = [45, 60, 75, 90, 105, 120 ,135, 150]
+# reopening_time = 100
+# β₀ = 0.4
+# betas = [0.01, 0.2] #low and high beta for CSV files to test Systrom. Yields R_t of 1.1 and 2.0
+
+## IGNORE HERE
+#varying n statistics
+# xvar1 = Vector() #n people
+# yvar1 = Vector() #mean(R)/n people
+# yvar2 = Vector() #std(R)/mean(R)
+# yvar5 = Vector() #variance
+# yvar6 = Vector() #skewness
+# #varying social distancing statistics
+# xvar2 = Vector() #social distancing time
+# yvar3 = Vector() #mean(R)/n people
+# yvar4 = Vector() #std(R)/mean(R)
+# yvar7 = Vector() #variance
+#
+# yvar8 = Vector() #skewness
+# #varying time between distancing and reopening statistics
+# xvar3 = Vector() #time in between aka reopening - distancing times
+# yvar9 = Vector() #proportion of resurgences
+# yvar10 = Vector() #mean(R)/n people
+# yvar11 = Vector() #std(R)/mean(R) = coefficient of variation
+#
+#
+# step_β(time) = time < social_distancing_time ? β₀ / n_people : β₀ / 10 / n_people
+#
+# function distance_and_reopen(time) #full reopening
+#     if time < social_distancing_time || time > reopening_time
+#         return β₀/n_people
+#     else
+#         return β₀/10/n_people
+#     end
+# end
+#
+# function distance_and_reopen2(time) #partial reopening
+#     if time < social_distancing_time
+#         return β₀/n_people
+#     elseif time > reopening_time
+#         return β₀/5/n_people
+#     else
+#         return β₀/10/n_people
+#     end
+# end
+
+# function reopen_when_low(time)
+#     if time < social_distancing_time
+#         return β₀/n_people
+    # elseif
+
+# step_β(time) = 0.15 * (1 + cos(2π * time / 365))
+# plot(step_β)
+
+# low = 0.04
+# high = 0.1
+# function step_β(time)
+#     if 1 <= mod(time, 7) <= 4 #monday-thursday
+#         return high
+#     else #friday-sunday
+#         return low
+#     end
+# end
+
+#
+# problem = stochastic_SIR_problem(n_people; β = distance_and_reopen, γ = 0.1, σ = 0.25)
+# ensemble = solve_ensemble(problem, 75)
+
+## CODE TO GENERATE 8 CSV FILES LOOK HERE
+sizes = [100, 1000, 10000, 100000]
+for size in sizes
+    #adjust beta and gamma as desired below
+    problem = stochastic_SIR_problem(size, β = .02, γ = 0.02, σ = 0.25)
+    ensemble = solve_ensemble(problem, 75) #75 realizations per ensemble
+
+    alpha = 0.2
+    p1 = plot_solution(ensemble[1], alpha=alpha) #plots single
+    display(p1)
+
+    reduced_ensemble = [] #option to add condition of how many are recovered
+    for (i, member) in enumerate(ensemble)
+        final_recovered = member.u[end][4]
+        final_recovered > 0 && push!(reduced_ensemble, member)
+    end
+    p1 = plot_solution(reduced_ensemble[1], alpha=alpha)
+    for i = 2:length(reduced_ensemble)
+        plot_solution!(p1, reduced_ensemble[i], alpha=alpha)
+    end
+    display(p1) #plotting ensemble
+end
+
+
+## General plotting for summer final pres
+# display(p1)
+# print(ensemble[2][2])
+# R =  map(e -> e.u[end][4], ensemble) #number recovered = total infected
+#
+# reduced_ensemble = [] #option to add condition of how many are recovered
+# for (i, member) in enumerate(ensemble)
+#     final_recovered = member.u[end][4]
+#     final_recovered > 0 && push!(reduced_ensemble, member)
+# end
+#
+# p1 = plot_solution(reduced_ensemble[1], alpha=alpha)
+# for i = 2:length(reduced_ensemble)
+#     plot_solution!(p1, reduced_ensemble[i], alpha=alpha) #what does this do
+# end
+#
+# plot!(p1, [1, 1] .* social_distancing_time, [0, n_people],
+#       color = :green,
+#       linewidth = 3,
+#       alpha = alpha,
+#       label = "Social distancing time")#adds label and line
+#
+# plot!(p1, [1, 1] .* reopening_time, [0, n_people],
+#     color = :orange,
+#     linewidth = 3,
+#     alpha = alpha,
+#     label = "Reopening time",
+#     title = "Distancing and Partially Reopening")
+# # display(p1)
+#
+# ##Probabilty density plot
+# R = map(e -> e.u[end][4], ensemble) #number recovered = total infected
+# print("mean = ", mean(R))
+# print("variance = ", var(R))
+# print("skewness = ", skewness(R))
+# p2 = histogram(R / n_people, bin=100)
+# display(p2)
+
+
+## Calculating the number of new infections on a specified day
+function daily_new_infections(solution, day)
+    i_previous_day = searchsortedfirst(solution.t, day-1)
+    previous_infections = solution.u[i_previous_day][3]
+
+    i_current_day = searchsortedfirst(solution.t, day)
+    current_infections = solution.u[i_current_day][3]
+
+    change = current_infections - previous_infections
+
+    if change >= 0
+        return change
+    else
+        return 0.0
+    end
+end
+
+## Creating dataframe mapping days to number of new infections on that day
+days = [1:100...]
+new_infections = Vector{Float64}()
+for day in days
+    new = daily_new_infections(ensemble[2], day)
+    push!(new_infections, new)
+end
+print(new_infections)
+
+df = DataFrame(day = days, new_inf = new_infections)
+# print(df)
+## Export as CSV/Excel file
+CSV.write("C:\\Users\\spkho\\OneDrive\\Documents\\COVID UROP\\test_large_population4.csv",df)
+
+## Scatter plots: Finding trends in mean/std dev of total # infected based on population size / social distancing
+#note to self: maybe use coefficient of variation instead of standard deviation to account for differnt pop size
+# First: vary population size (n_people)
