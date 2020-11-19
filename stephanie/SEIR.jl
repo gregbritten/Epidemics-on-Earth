@@ -9,6 +9,7 @@ using DataFrames, CSV
 using Statistics, OnlineStats
 # SEIR problem...
 #
+
 # integrator.u[1] : "S"
 # integrator.u[2] : "E"
 # integrator.u[3] : "I"
@@ -42,7 +43,7 @@ end
 transmission_rate(β, time) = β
 transmission_rate(β::Function, time) = β(time)
 
-exposure_rate(state, parameters, time) = transmission_rate(parameters.β, time) * state[1] * state[3]
+exposure_rate(state, parameters, time) = transmission_rate(parameters.β, time) * state[1] * state[3] / parameters.n_people
 infection_rate(state, parameters, time) = parameters.σ * state[2]
 recovery_rate(state, parameters, time) = parameters.γ * state[3]
 
@@ -65,11 +66,11 @@ function stochastic_SIR_problem(n_people;
                                 γ,
                                 percent_infectious = 1,
                                 percent_exposed = 0,
-                                time_span = (0, 100.0)
+                                time_span = (0, 300.0)
                                 )
 
     # Parameters
-    parameters = (β=β, σ=σ, γ=γ)
+    parameters = (β=β, σ=σ, γ=γ, n_people=n_people)
 
     # Initial condition
     n_infectious = ceil(n_people * percent_infectious / 100)
@@ -194,6 +195,8 @@ function plot_solution!(two_pane, solution; kwargs...)
     return nothing
 end
 
+
+
 ## Different Betas
 
 #
@@ -278,28 +281,42 @@ end
 # ensemble = solve_ensemble(problem, 75)
 
 ## CODE TO GENERATE 8 CSV FILES LOOK HERE
-sizes = [100, 1000, 10000, 100000]
+# sizes = [100, 1000, 10000, 100000]
+sizes = [100000]
 for size in sizes
     #adjust beta and gamma as desired below
-    problem = stochastic_SIR_problem(size, β = .02, γ = 0.02, σ = 0.25)
+    problem = stochastic_SIR_problem(size, β = 1.0, γ = 0.1, σ = 0.1)
     ensemble = solve_ensemble(problem, 75) #75 realizations per ensemble
-
     alpha = 0.2
     p1 = plot_solution(ensemble[1], alpha=alpha) #plots single
     display(p1)
 
-    reduced_ensemble = [] #option to add condition of how many are recovered
-    for (i, member) in enumerate(ensemble)
-        final_recovered = member.u[end][4]
-        final_recovered > 0 && push!(reduced_ensemble, member)
+    ## Creating dataframe mapping days to number of new infections on that day
+    count = 1
+    days = [1:300...]
+    df = DataFrame(day = days)
+    new_infections = Vector{Float64}()
+    for realization in ensemble
+        new_infections = Vector{Float64}()
+        for day in days
+            new = daily_new_infections(realization, day)
+            push!(new_infections, new)
+        end
+        title = count
+        count += 1
+        df[title] = new_infections
     end
-    p1 = plot_solution(reduced_ensemble[1], alpha=alpha)
-    for i = 2:length(reduced_ensemble)
-        plot_solution!(p1, reduced_ensemble[i], alpha=alpha)
-    end
-    display(p1) #plotting ensemble
+
+    # df = DataFrame(day = days, new_inf = new_infections)
+    CSV.write("C:\\Users\\spkho\\OneDrive\\Documents\\COVID UROP\\ensemble_n4_B3.csv",df)
 end
 
+# S1 = map(e -> e.u[1][1], ensemble) #susceptible at beginning
+# S2 = map(e -> e.u[end][1], ensemble) #susceptible left
+# R = map(e -> e.u[end][4], ensemble)
+# print("S_start", S1)
+# print("S_end", S2)
+# print('R', R)
 
 ## General plotting for summer final pres
 # display(p1)
@@ -343,12 +360,15 @@ end
 ## Calculating the number of new infections on a specified day
 function daily_new_infections(solution, day)
     i_previous_day = searchsortedfirst(solution.t, day-1)
-    previous_infections = solution.u[i_previous_day][3]
+    # previous_infections = solution.u[i_previous_day][3]
+    previous_susceptible = solution.u[i_previous_day][1]
 
     i_current_day = searchsortedfirst(solution.t, day)
-    current_infections = solution.u[i_current_day][3]
+    # current_infections = solution.u[i_current_day][3]
+    current_susceptible = solution.u[i_current_day][1]
 
-    change = current_infections - previous_infections
+    # change = current_infections - previous_infections
+    change = previous_susceptible - current_susceptible
 
     if change >= 0
         return change
