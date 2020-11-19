@@ -115,7 +115,7 @@ end
 """
     unpack(solution)
 
-Returns t, S, I, R.
+Returns t, S, E, I, R.
 """
 function unpack(solution)
     S = map(u -> u[1], solution.u)
@@ -282,7 +282,7 @@ end
 
 ## CODE TO GENERATE 8 CSV FILES LOOK HERE
 # sizes = [100, 1000, 10000, 100000]
-sizes = [100000]
+sizes = [1000000]
 for size in sizes
     #adjust beta and gamma as desired below
     problem = stochastic_SIR_problem(size, β = 1.0, γ = 0.1, σ = 0.1)
@@ -291,24 +291,42 @@ for size in sizes
     p1 = plot_solution(ensemble[1], alpha=alpha) #plots single
     display(p1)
 
+    reduced_ensemble = [] #option to add condition of how many are recovered
+    for (i, member) in enumerate(ensemble)
+        final_recovered = member.u[end][4]
+        final_recovered > 0 && push!(reduced_ensemble, member)
+    end
+
+    p2 = plot_solution(reduced_ensemble[1], alpha=alpha)
+    for i = 2:length(reduced_ensemble)
+        plot_solution!(p2, reduced_ensemble[i], alpha=alpha) #what does this do
+    end
+    display(p2)
+
     ## Creating dataframe mapping days to number of new infections on that day
+    fns = [daily_new_susceptible, daily_new_exposed, daily_new_infectious, daily_new_recovered]
     count = 1
     days = [1:300...]
     df = DataFrame(day = days)
-    new_infections = Vector{Float64}()
+    new_x = Vector{Float64}()
     for realization in ensemble
-        new_infections = Vector{Float64}()
-        for day in days
-            new = daily_new_infections(realization, day)
-            push!(new_infections, new)
+        for f in fns
+            new_x = Vector{Float64}()
+            for day in days
+                new = f(realization, day)
+                # print("NEWW", new)
+                # print("LENGTh", length(new))
+                push!(new_x, new)
+            end
+            title = count
+            count += 1
+            df[title] = new_x
         end
-        title = count
-        count += 1
-        df[title] = new_infections
+
     end
 
     # df = DataFrame(day = days, new_inf = new_infections)
-    CSV.write("C:\\Users\\spkho\\OneDrive\\Documents\\COVID UROP\\ensemble_n4_B3.csv",df)
+    CSV.write("C:\\Users\\spkho\\OneDrive\\Documents\\COVID UROP\\SEIR_n3_B3.csv",df)
 end
 
 # S1 = map(e -> e.u[1][1], ensemble) #susceptible at beginning
@@ -316,7 +334,7 @@ end
 # R = map(e -> e.u[end][4], ensemble)
 # print("S_start", S1)
 # print("S_end", S2)
-# print('R', R)
+# print('R', R))
 
 ## General plotting for summer final pres
 # display(p1)
@@ -357,18 +375,26 @@ end
 # display(p2)
 
 
-## Calculating the number of new infections on a specified day
-function daily_new_infections(solution, day)
-    i_previous_day = searchsortedfirst(solution.t, day-1)
-    # previous_infections = solution.u[i_previous_day][3]
-    previous_susceptible = solution.u[i_previous_day][1]
+function daily_new_susceptible(solution, day)
+    """
+    implement this if want to find decrease in susceptible, but that's
+    just the opposite of daily new exposed
+    """
+    return 0
+end
 
-    i_current_day = searchsortedfirst(solution.t, day)
-    # current_infections = solution.u[i_current_day][3]
-    current_susceptible = solution.u[i_current_day][1]
+function daily_new_exposed(solution, day)
+    """
+    Calculating the number of new exposed persons on a specified day
+    Compares change in susceptible
+    """
+    e_previous_day = searchsortedfirst(solution.t, day-1)
+    previous_exposed = solution.u[e_previous_day][1]
 
-    # change = current_infections - previous_infections
-    change = previous_susceptible - current_susceptible
+    e_current_day = searchsortedfirst(solution.t, day)
+    current_exposed = solution.u[e_current_day][1]
+
+    change = previous_exposed - current_exposed
 
     if change >= 0
         return change
@@ -376,6 +402,47 @@ function daily_new_infections(solution, day)
         return 0.0
     end
 end
+
+function daily_new_infectious(solution, day)
+    """
+    calculating new number of infectious persons on a given day
+    compares change in exposed
+    """
+    i_previous_day = searchsortedfirst(solution.t, day-1)
+    previous_infectious = solution.u[i_previous_day][2]
+
+    i_current_day = searchsortedfirst(solution.t, day)
+    current_infectious = solution.u[i_current_day][2]
+
+    change = previous_infectious - current_infectious
+
+    if change >= 0
+        return change
+    else
+        return 0.0
+    end
+end
+
+function daily_new_recovered(solution, day)
+    """
+    calculating new number of recovered/"removed" persons on a given day
+    compares change in infectious
+    """
+    r_previous_day = searchsortedfirst(solution.t, day-1)
+    previous_recovered = solution.u[r_previous_day][3]
+
+    r_current_day = searchsortedfirst(solution.t, day)
+    current_recovered = solution.u[r_current_day][3]
+
+    change = previous_recovered - current_recovered
+
+    if change >= 0
+        return change
+    else
+        return 0.0
+    end
+end
+
 
 ## Creating dataframe mapping days to number of new infections on that day
 days = [1:100...]
