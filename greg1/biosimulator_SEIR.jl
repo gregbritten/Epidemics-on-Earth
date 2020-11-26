@@ -11,7 +11,7 @@ n_people = 10000
 β        = β₀/n_people
 γ        = 0.1
 σ        = 0.1
-days     = 300
+days     = 2*365
 
 SEIR  = Network("SEIR")
 SEIR <= Species("S",n_people - 1)
@@ -23,12 +23,12 @@ SEIR <= Reaction("exposure",  β, "S + I --> E + I")
 SEIR <= Reaction("infection", σ, "E     --> I")
 SEIR <= Reaction("recovery",  γ, "I     --> R")
 
-tsave = 1.0:1.0:300
+tsave = 1.0:1.0:days
 
 SEIRsim = simulate(SEIR, Direct(), tfinal=days, rates_cache=HasRates, ntrials=50,save_points=tsave)
 #SIRsim = simulate(SIR, Direct(), tfinal=days, rates_cache=HasRates, save_points=0:1:365, ntrials=50)
 
-plot(SEIRsim, summary=:mean, label=["S" "E" "I" "R"])
+#plot(SEIRsim, summary=:mean, label=["S" "E" "I" "R"])
 
 pSEIR = plot(SEIRsim[1], linecolor=["red" "blue" "green" "black"],label=["S" "E" "I" "R"])
 for i=2:length(SEIRsim)
@@ -37,4 +37,5 @@ end
 
 display(pSEIR)
 
-CSV.write("d:/dropbox/working/covid19/urop/github/greg1/test_data.csv", DataFrame(SEIRsim[1]'))
+str = @sprintf "d:/dropbox/working/covid19/urop/github/greg1/SEIR_ensemble_n=%.0f_b=%.2f.csv" n_people β₀
+CSV.write(str,SEIRsim)
