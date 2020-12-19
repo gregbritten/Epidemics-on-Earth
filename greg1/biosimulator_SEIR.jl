@@ -3,15 +3,17 @@ using BioSimulator
 using Plots
 using CSV
 using DataFrames
+using Printf
+
 ########################################################
 ### SIRD ################################################
 ########################################################
-n_people = 100000
+n_people = Int(1E6)
 β₀       = 0.3
 β        = β₀/n_people
 γ        = 0.1
 σ        = 0.1
-days     = 2*365
+days     = 365
 
 SEIR  = Network("SEIR")
 SEIR <= Species("S",n_people - 1)
