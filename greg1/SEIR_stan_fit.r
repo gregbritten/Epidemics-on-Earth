@@ -1,6 +1,7 @@
 library(rstan)
 library(lubridate)
 library(lmodel2)
+library(zoo)
 options(mc.cores = parallel::detectCores())
 Sys.setenv(LOCAL_CPPFLAGS = '-march=corei7 -mtune=corei7')
 
@@ -10,11 +11,11 @@ setwd('d:/dropbox/working/covid19/synthetic_observations/' )
 ## ESTIMATE PARAMETERS ##############################################################
 #####################################################################################
 ##--COMPILE STAN CODE--###############
-mod_betaAR1 <- stan_model('stan_SEIR_discrete_beta_AR1.stan')
+#mod_betaAR1 <- stan_model('stan_SEIR_discrete_beta_AR1.stan')
+#mod2 <- stan_model('stan_SEIR_discrete_fixed.stan')
+#modrw <- stan_model('stan_SEIR_discrete_rw.stan')
 
-mod2 <- stan_model('stan_SEIR_discrete_fixed.stan')
-
-modrw <- stan_model('stan_SEIR_discrete_rw.stan')
+mod <- stan_model('d:/dropbox/working/covid19/urop/github/greg1/stan_SEIR.stan')
 
 #######################################
 ## READ DATA ##########################
@@ -25,7 +26,7 @@ dat <- dat[rev(1:nrow(dat)),]
 mat <- read.csv('d:/google/working/covid/massachusetts-history.csv')
 mat$positiveIncrease[mat$positiveIncrease<0] <- 0
 mat$time <- decimal_date(mdy(mat$date))
-mat <- mat,[rev(1:nrow(mat)),]
+mat <- mat[rev(1:nrow(mat)),]
 mat <- mat[mat$time>2020.2,]
 
 #####################################
@@ -217,9 +218,9 @@ dataNEp <- list(POP=popNE,
 			 x0 = x0)
 dataMA <- list(POP=1E5,
 			 y=yMA,
-			 N_obs=length(yMA),
-			 t_obs=1:length(yMA),
-			 x0 = x0)
+			 N_obs=length(yMA))
+			 #t_obs=1:length(yMA))#,
+#			 x0 = x0)
 dataMAp <- list(POP=popMA,
 			 y=yMAp,
 			 N_obs=length(yMAp),
@@ -237,7 +238,7 @@ postNE <- extract(mcmcNE)
 mcmcNEp <- sampling(mod2, data=dataNEp ,open_progress=TRUE)
 postNEp <- extract(mcmcNEp)
 
-mcmcMA <- sampling(mod_betaAR1, data=dataMA ,open_progress=TRUE)
+mcmcMA <- sampling(mod, data=dataMA ,open_progress=TRUE)
 mcmcMArw <- sampling(modrw, data=dataMA ,open_progress=TRUE)
 #mcmcMA <- sampling(mod2, data=dataMA ,open_progress=TRUE)
 postMA <- extract(mcmcMArw)

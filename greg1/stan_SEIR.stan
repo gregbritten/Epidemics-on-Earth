@@ -1,23 +1,29 @@
 data {
-  real<lower=0> POP;          	
+  int<lower=0> POP;          	
   int<lower=0>  N_obs;         
   int<lower=0>  y[N_obs]; 
-  //real          x0[4];
 }
 parameters {
+  //real<lower=1.0> POP;
   real<lower=0.0> beta[N_obs];
   //real<lower=0.0> gamma;
   //real<lower=0.0> sigma;
   //real<lower=0.0,upper=1.0> I0;
-  real<lower=0.0,upper=1.0> E0;
+  //real<lower=0.0,upper=1.0> E0;
   real<lower=1E-15,upper=0.1> sigma_beta;
+  //real<lower=1E-15,upper=1.0> alpha;
 }
 transformed parameters {
   real x[N_obs,4];
   //real R0[N_obs];
-  x[1,1] = 0.0;
-  x[1,2] = E0;
-  x[1,3] = 1-E0;
+  //x[1,1] = 0.0;
+  //x[1,2] = E0;
+  //x[1,3] = 1-E0;
+  //x[1,4] = 0.0;
+  //x[1,] = x0;
+  x[1,1] = POP - 1.0/POP;
+  x[1,2] = 0.0;
+  x[1,3] = 1.0/POP;
   x[1,4] = 0.0;
   for(j in 2:N_obs){
 	  x[j,1] = fmax(x[j-1,1] - beta[j]*x[j-1,1]*x[j-1,3],1E-15);
@@ -25,9 +31,9 @@ transformed parameters {
 	  x[j,3] = fmax(x[j-1,3] + (1.0/7.0)*x[j-1,2]  - (1.0/7.0)*x[j-1,3],1E-15);
 	  x[j,4] = fmax(x[j-1,4] + (1.0/7.0)*x[j-1,3],1E-15);
 	  // x[j,1] = fmax(x[j-1,1] - beta[j]*x[j-1,1]*x[j-1,3],1E-15);
-	  // x[j,2] = fmax(x[j-1,2] + beta[j]*x[j-1,1]*x[j-1,3] - (1.0/5.0)*x[j-1,2],1E-15);
-	  // x[j,3] = fmax(x[j-1,3] + (1.0/5.0)*x[j-1,2]  - (1.0/7.0)*x[j-1,3],1E-15);
-	  // x[j,4] = fmax(x[j-1,4] + (1.0/7.0)*x[j-1,3],1E-15);
+	  // x[j,2] = fmax(x[j-1,2] + beta[j]*x[j-1,1]*x[j-1,3] - sigma*x[j-1,2],1E-15);
+	  // x[j,3] = fmax(x[j-1,3] + sigma*x[j-1,2]  - gamma*x[j-1,3],1E-15);
+	  // x[j,4] = fmax(x[j-1,4] + gamma*x[j-1,3],1E-15);
   }  
 //  for(i in 1:N_obs){
 //	  R0[i] = beta[i]/gamma;
@@ -36,9 +42,11 @@ transformed parameters {
 model {
   //gamma ~ normal(1.0/7.0,0.005);
   //sigma ~ normal(1.0/5.0,0.005);
-  beta[1] ~ uniform(0.0,2.0);
+  beta[1] ~ uniform(0.1,0.4);
   for(i in 2:N_obs){
-	  beta[i] ~ normal(0.99*beta[i-1],sigma_beta);
+	  //beta[i] ~ normal(0.95*beta[i-1],sigma_beta);
+	  //beta[i] ~ normal(alpha*beta[i-1],sigma_beta);
+	  beta[i] ~ normal(beta[i-1],0.05);
   }
   for(j in 2:N_obs){
 	y[j] ~ poisson(fmax((x[j,3]-x[j-1,3])*POP,1E-15));
