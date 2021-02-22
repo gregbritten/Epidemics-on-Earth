@@ -1,3 +1,4 @@
+library(lubridate)
 library(zoo)
 library(rstan)
 options(mc.cores = parallel::detectCores())
@@ -17,6 +18,7 @@ SUF_I     <- round(SUF_I)
 #plot(SUF_I)
 SUF_I[1]  <- 1
 ySUF      <- SUF_I
+suf_date <- mdy(substring(colnames(suf[,5:ncol(suf)]),2))
 
 
 WW <- rollapply(na.approx(c(1,dat$south_7avg)),width=7,FUN=mean,align='right',fill=NA)
@@ -36,13 +38,33 @@ dataSUF <- list(POP=POP,
 
 dataWW <- list(POP=POP,
 			    y=yWW,
-			    N_obs=length(ySUF),
-			    t_obs=1:length(ySUF),
+			    N_obs=length(yWW),
+			    t_obs=1:length(yWW),
 			    x0 = x0)
 
+
+df <- data.frame(date=c(1:length(yWW),1:length(ySUF)),
+				 state=c(rep('WW',length(yWW)),rep('SUF',length(ySUF))),
+                 cases=c(cumsum(yWW),cumsum(ySUF)))
+
+dftib <- as_tibble(df)
 ########################################################
 
 mod <- stan_model('d:/dropbox/working/covid19/urop/github/greg1/stan_SEIR.stan')
+
+mcmcSUF <- sampling(mod, data=dataSUF, open_progress=TRUE)
+postSUF <- extract(mcmcSUF)
+optimizing(mod, data=dataSUF)
+
+mcmcWW <- sampling(mod, data=dataWW, open_progress=TRUE)
+postWW <- extract(mcmcWW)
+
+
+
+
+
+
+
 
 
 
